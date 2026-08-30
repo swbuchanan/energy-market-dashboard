@@ -1,0 +1,26 @@
+# Goes at .github/dependabot.yml
+#
+# Trying to fix some stupid version confusion. Once actions are pinned to
+# commit SHAs, nothing tells you a newer version exists — Dependabot does,
+# by opening a PR that bumps the SHA and updates the trailing version comment
+# for you. CI runs on that PR, so you see it pass before you merge.
+
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /                 # where the workflows live, always "/"
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "ci"
+
+  # Same idea for Python. uv.lock is respected — Dependabot edits pyproject.toml
+  # and regenerates the lock. Grouped so you get one PR a month rather than
+  # a dozen, which is the difference between useful and noise.
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      python-dependencies:
+        patterns: ["*"]
