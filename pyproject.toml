@@ -1,7 +1,28 @@
 [project]
 name = "energy-market-dashboard"
 version = "0.1.0"
-description = "Add your description here"
+description = "Dashboard for Australian energy market data"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "beautifulsoup4>=4.15.0",
+    "duckdb>=1.5.5",
+    "httpx>=0.28.1",
+    "plotly>=7.0.0",
+    "polars>=1.44.1",
+    "pyarrow>=25.0.1",
+    "streamlit>=1.62.0",
+]
+
+
+[tool.uv]
+package = true
+
+[dependency-groups]
+dev = [
+    "jupyterlab>=4.6.3",
+    "mypy>=2.3.1",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.16.4",
+]
