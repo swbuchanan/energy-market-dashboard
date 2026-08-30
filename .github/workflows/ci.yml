@@ -1,0 +1,73 @@
+# Goes at .github/workflows/ci.yml
+#
+# The filename doesn't matter; the location does. GitHub reads every YAML file
+# under .github/workflows/ and treats each as an independent workflow.
+
+name: CI
+
+# WHEN this runs. Every workflow needs at least one trigger.
+on:
+  push:
+    branches: [main]        # runs on every push to main
+  pull_request:             # and on every PR, against the merge result
+  workflow_dispatch:        # and a manual "Run workflow" button in the UI
+
+# If you push twice in quick succession, cancel the older run.
+# Saves minutes and stops you reading stale results.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest    # a fresh VM, thrown away when the job ends
+
+    steps:
+      # `uses:` pulls in someone else's packaged action.
+      # Pin to a major tag (@v7) or, if you want to be strict, a commit SHA.
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v9
+        with:
+          enable-cache: true            # caches ~/.cache/uv between runs
+          cache-dependency-glob: uv.lock
+
+      # --locked fails if uv.lock is out of date with pyproject.toml,
+      # which is exactly what you want in CI: no silent dependency drift.
+      - name: Install the project
+        run: uv sync --locked --all-extras --dev
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Format check
+        run: uv run ruff format --check .
+
+      - name: Type check
+        run: uv run mypy
+
+      - name: Test
+        run: uv run pytest --cov=energy_market_dashboard --cov-report=term-missing
+
+# Each step is a shell command (`run:`) or a prepacked action (`uses:`).
+# A non-zero exit code fails the step, which fails the job, which fails the run.
+# That is the entire pass/fail model — nothing else to it.
+#
+# ---------------------------------------------------------------------------
+# Later, when you want to test on more than one Python version, this is the
+# whole change — it runs the job twice, in parallel, on separate machines:
+#
+#   check:
+#     runs-on: ubuntu-latest
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         python-version: ["3.12", "3.13"]
+#     steps:
+#       - uses: actions/checkout@v7
+#       - uses: astral-sh/setup-uv@v9
+#         with:
+#           enable-cache: true
+#           python-version: ${{ matrix.python-version }}
+#       ...

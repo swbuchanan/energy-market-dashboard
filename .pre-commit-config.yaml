@@ -1,0 +1,34 @@
+# Goes at the repo root: .pre-commit-config.yaml
+#
+#   uv add --dev pre-commit
+#   uv run pre-commit install        # installs the git hook, once
+#   uv run pre-commit autoupdate     # bumps the `rev:` pins below to current
+#   uv run pre-commit run --all-files
+#
+# After `install`, these run on `git commit` against staged files only.
+# The point is that CI never fails on something a hook would have caught
+# locally in half a second.
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.5          # keep roughly in step with the ruff in your dev group
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0           # run `pre-commit autoupdate` to get the current tag
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      # The guard that matters for this project: stops a stray parquet file
+      # or a day of raw zips from ever entering the history.
+      - id: check-added-large-files
+        args: [--maxkb=500]
+
+# Deliberately not running mypy here. It needs the full environment, which
+# makes the hook slow and flaky. Leave type checking to CI.
